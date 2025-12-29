@@ -1,0 +1,92 @@
+
+
+const API_BASE_URL = 'http://localhost:8000';
+
+export const uploadCSV = async (file) => {
+  console.log('Uploading file:', file.name);
+  
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/api/zomato/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Upload error:', errorText);
+    throw new Error('Upload failed');
+  }
+
+  return response.json();
+};
+
+export const startScraping = async (jobId, resIds) => {
+  const response = await fetch(`${API_BASE_URL}/api/zomato/start-scraping-with-ids`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      job_id: jobId,
+      res_ids: resIds,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to start scraping');
+  }
+
+  return response.json();
+};
+
+export const getJobStatus = async (jobId) => {
+  const response = await fetch(`${API_BASE_URL}/api/zomato/status/${jobId}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to get status');
+  }
+
+  return response.json();
+};
+
+export const downloadResults = async (jobId) => {
+  const response = await fetch(`${API_BASE_URL}/api/zomato/download/${jobId}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to download results');
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `zomato_results_${jobId}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+};
+
+export const getFailedUrls = async (jobId) => {
+  const response = await fetch(`${API_BASE_URL}/api/zomato/failed/${jobId}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to get failed URLs');
+  }
+
+  return response.json();
+};
+
+export const retryFailedUrls = async (jobId) => {
+  const response = await fetch(`${API_BASE_URL}/api/zomato/retry-failed/${jobId}`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to retry');
+  }
+
+  return response.json();
+}
